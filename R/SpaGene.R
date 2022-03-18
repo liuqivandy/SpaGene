@@ -1,22 +1,3 @@
-Caldegree<-function(nodelist,nnmatrix,knnnum) {
-  nodenum<-length(nodelist)
-
-  nnmatrix_sub<-nnmatrix[nodelist,-1]
-
-  deg<-rep(0,nodenum)
-  matchres<-matrix(match(nnmatrix_sub,nodelist),ncol=knnnum-1,byrow=F)
-  ind<-!is.na(matchres)
-  deg<-deg+rowSums(ind)
-
-  matchres<-matchres[ind]
-  for (i in 1:length(matchres)) deg[matchres[i]]<-deg[matchres[i]]+1
-
-  dis<-sum(cumsum(tabulate(deg+1,nbins=2*knnnum+1)/nodenum))
-  return(dis)
-}
-
-
-
 #' Identify spatially variable genes
 #'
 #' @description Identify spatial variable genes based on spatial connectness of spots with high expression compared to random permutation
@@ -98,6 +79,24 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
   spagene_res$pval<-pnorm(spagene_res$score,mean=mean_rand,sd=sd_rand)
   spagene_res$adjp<-p.adjust(spagene_res$pval,method="BH")
   return(spagene_res)
+}
+
+
+Caldegree<-function(nodelist,nnmatrix,knnnum) {
+  nodenum<-length(nodelist)
+
+  nnmatrix_sub<-nnmatrix[nodelist,-1]
+
+  deg<-rep(0,nodenum)
+  matchres<-matrix(match(nnmatrix_sub,nodelist),ncol=knnnum-1,byrow=F)
+  ind<-!is.na(matchres)
+  deg<-deg+rowSums(ind)
+
+  matchres<-matchres[ind]
+  for (i in 1:length(matchres)) deg[matchres[i]]<-deg[matchres[i]]+1
+
+  dis<-sum(cumsum(tabulate(deg+1,nbins=2*knnnum+1)/nodenum))
+  return(dis)
 }
 
 
