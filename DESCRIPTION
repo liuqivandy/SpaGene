@@ -1,0 +1,17 @@
+Package: SpaGene
+Type: Package
+Title: Identify spatially localized genes and colocalized gene pairs 
+Version: 0.1.0
+Author: Qi Liu
+Maintainer: Qi Liu <qi.liu@vumc.org>
+Description: Characterize spatial patterns from spatial omics data
+License: LGPL
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.6),
+         Matrix (>= 1.2)
+Imports: 
+    RANN (>= 2.6),
+    RcppML (>= 0.3.7) 
+
+    
