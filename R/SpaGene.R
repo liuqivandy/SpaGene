@@ -15,7 +15,7 @@
 
 SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,perm=500,minN=0) {
 
-  expr<-expr[rowSums(expr>0)>minN,]
+  expr<-expr[Matrix::rowSums(expr>0)>minN,]
 
   ncell<-dim(location)[1]
   ngene<-dim(expr)[1]
@@ -31,20 +31,22 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
    mean_rand<-mean(rand_result)
    sd_rand<-sd(rand_result)
 
+   spagene_res<-data.frame(score=rep(NA,ngene),row.names=rownames(expr),stringsAsFactors = FALSE)
+
+
   if (is(expr,"sparseMatrix")){
-    exprt<-t(expr)
+    exprt<-Matrix::t(expr)
     colind<-exprt@i+1
     dp<-exprt@p
     expval<-exprt@x
 
     if (normalize==TRUE) {
-       lib_size<-rowSums(exprt)
+       lib_size<-Matrix::rowSums(exprt)
        expval<-expval/lib_size[colind]
 
      }
 
 
-    spagene_res<-data.frame(score=rep(NA,ngene),row.names=rownames(expr),stringsAsFactors = FALSE)
 
     for (geneind in 1:ngene) {
 
