@@ -5,7 +5,7 @@
 #' @param expr gene expression matrix, the row is the gene and the column is the spot/cell
 #' @param location location matrix, the row number of location should match the column number of expr
 #' @param normalize whether to normalize the data (default: TRUE)
-#' @param topn the number of spots/cells considered high expression (default: 20% of the total spots/cells)
+#' @param topn the number of spots/cells considered high expression (default: 20 percent of the total spots/cells)
 #' @param knn the number of nearest neighbours to search (default: 8)
 #' @param perm the number of random permutations (default: 500)
 #' @param minN the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)

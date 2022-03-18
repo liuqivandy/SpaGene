@@ -21,7 +21,7 @@ SpaGene(
 
 \item{normalize}{whether to normalize the data (default: TRUE)}
 
-\item{topn}{the number of spots/cells considered high expression (default: 20% of the total spots/cells)}
+\item{topn}{the number of spots/cells considered high expression (default: 20 percent of the total spots/cells)}
 
 \item{knn}{the number of nearest neighbours to search (default: 8)}
 
