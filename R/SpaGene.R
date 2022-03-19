@@ -9,11 +9,12 @@
 #' @param knn the number of nearest neighbours to search (default: 8)
 #' @param perm the number of random permutations (default: 500)
 #' @param minN the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)
-#' @return a data frame containing results of each gene
+#' @param sizefactor the size factor for normalization
+#' @return a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)
 
 #' @export
 
-SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,perm=500,minN=0) {
+SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,perm=500,minN=0,sizefactor=10000) {
 
   expr<-expr[Matrix::rowSums(expr>0)>minN,]
 
@@ -42,8 +43,9 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
 
     if (normalize==TRUE) {
        lib_size<-Matrix::rowSums(exprt)
-       expval<-expval/lib_size[colind]
-
+       expval<-log(expval/lib_size[colind]*sizefactor+1)
+       exprt@x<-expval
+       expr<-Matrix::t(exprt)
      }
 
 
@@ -61,7 +63,7 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
   } else{
 
          if (normalize==TRUE) {
-             expr<-t(t(expr)/(colSums(expr)))
+             expr<-log(t(t(expr)/(colSums(expr))*sizefactor)+1)
           }
 
         for (geneind in 1:ngene) {
@@ -80,7 +82,31 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
 
   spagene_res$pval<-pnorm(spagene_res$score,mean=mean_rand,sd=sd_rand)
   spagene_res$adjp<-p.adjust(spagene_res$pval,method="BH")
-  return(spagene_res)
+  return(list(normexp=expr,spagene_res=spagene_res))
+}
+
+#' Find spatial patterns
+#' @description Find spatial patterns
+#' @param spagene_res result from SpaGene, a list containing normexp and spagene_res
+#' @param cutoff the adjp cutoff to select spatially variable genes (default: 0.01)
+#' @param nPattern the number of patterns (default:8)
+#' @return a list containing the pattern (pattern), gene similarity with the pattern (genepattern), and the pattern weight (patternw)
+#' @export
+
+FindPattern<-function(spagene_res,cutoff=0.01,nPattern=8){
+
+  genes<-rownames(spagene_res$spagene_res)[spagene_res$spagene_res$adjp<cutoff]
+  data<-spagene_res$normexp
+  data_g<-as.matrix(data[rownames(data)%in%genes,])
+
+  model<-RcppML::nmf(data_g,nPattern)
+  cellload<-model$h
+  patternw<-model$d
+  genew<-model$w
+  rownames(genew)<-rownames(data_g)
+  rownames(cellload)<-paste0("Pattern",1:nPattern)
+  genepattern<-cor(t(data_g),t(cellload),method="spearman")
+  return(list(pattern=cellload,genepattern=genepattern,patternw=patternw))
 }
 
 

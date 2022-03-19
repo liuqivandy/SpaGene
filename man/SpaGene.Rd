@@ -11,7 +11,8 @@ SpaGene(
   topn = floor(0.2 * dim(location)[1]),
   knn = 8,
   perm = 500,
-  minN = 0
+  minN = 0,
+  sizefactor = 10000
 )
 }
 \arguments{
@@ -28,9 +29,11 @@ SpaGene(
 \item{perm}{the number of random permutations (default: 500)}
 
 \item{minN}{the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)}
+
+\item{sizefactor}{the size factor for normalization}
 }
 \value{
-a data frame containing results of each gene
+a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)
 }
 \description{
 Identify spatial variable genes based on spatial connectness of spots with high expression compared to random permutation
