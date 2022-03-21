@@ -32,6 +32,6 @@ install_github("liuqivandy/SpaGene")
 <a name="tutoral"/>
 
 # Tutorial
-- [Analyze spatial transcriptomics MOB data](https://htmlpreview.github.io/?https://github.com/liuqivandy/blob/master/Tutorial/mob.html)
-- [Analyze MERFISH data](https://htmlpreview.github.io/?https://github.com/liuqivandy/blob/master/Tutorial/MERFISH.html)
-- [Analyze Slideseq V2 mouse cerebellum data](https://htmlpreview.github.io/?https://github.com/liuqivany/blob/master/Tutorial/mc_slideseqv2.html)
+- [Analyze spatial transcriptomics MOB data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/mob.html)
+- [Analyze MERFISH data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/MERFISH.html)
+- [Analyze Slideseq V2 mouse cerebellum data](https://htmlpreview.github.io/?https://github.com/liuqivany/SpaGene/blob/master/Tutorial/mc_slideseqv2.html)
