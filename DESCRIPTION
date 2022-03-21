@@ -8,8 +8,10 @@ Description: Characterize spatial patterns from spatial omics data
 License: LGPL
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.6),Matrix (>= 1.2)
+Depends: R (>= 3.6),Matrix (>= 1.2),ggplot2 (>= 3.3.5),patchwork (>= 1.1)
 Imports: 
     RANN (>= 2.6),
     RcppML (>= 0.3.7) 
+Suggests:
+    RColorBrewer (>= 1.1),
 RoxygenNote: 7.1.1
