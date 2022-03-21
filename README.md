@@ -1,1 +1,37 @@
 # SpaGene
+==========
+* [Introduction](#introduction)
+* [Installation](#installation)
+* [Citation](#citation)
+* [Tutorial](#tutorial)
+
+<a name="introduction"/>
+
+# Introduction
+
+SpaGene is a R package to find sptially variable genes and colocalized gene pairs from sptial omics data.
+
+<a name="installation"/>
+
+# Installation
+
+```R
+
+library(devtools)
+install_github("liuqivandy/SpaGene")
+```
+
+
+<a name="citation"/>
+
+# Citation
+
+ Liu Q, Scalable and model-free detection of spatial patterns and colocalization.
+ 
+
+<a name="tutoral"/>
+
+# Tutorial
+- [Analyze spatial transcriptomics MOB data](https://htmlpreview.github.io/?https://github.com/liuqivandy/blob/master/tutorial/mob.html)
+- [Analyze MERFISH data](https://htmlpreview.github.io/?https://github.com/liuqivandy/blob/master/tutorial/MERFISH.html)
+- [Analyze Slideseq V2 mouse cerebellum data](https://htmlpreview.github.io/?https://github.com/liuqivany/blob/master/tutorial/mc_slideseqv2.html)
