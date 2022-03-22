@@ -3,5 +3,7 @@
 export(FindPattern)
 export(PlotPattern)
 export(SpaGene)
+export(SpaGene_CT)
 export(SpaGene_LR)
+export(SpaGene_sparse)
 export(plotLR)

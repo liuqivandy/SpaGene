@@ -5,7 +5,7 @@
 #' @param expr gene expression matrix, the row is the gene and the column is the spot/cell
 #' @param location location matrix, the row number of location should match the column number of expr
 #' @param normalize whether to normalize the data (default: TRUE)
-#' @param topn the number of spots/cells considered high expression (default: 20 percent of the total spots/cells)
+#' @param topn the ratio of spots/cells considered high expression (default: 20 percent of the total spots/cells)
 #' @param knn the number of nearest neighbours to search (default: 8)
 #' @param perm the number of random permutations (default: 500)
 #' @param minN the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)
@@ -181,6 +181,197 @@ SpaGene_LR<-function(expr,location,normalize=T, topn=floor(0.2*dim(location)[1])
 }
 
 
+#' Identify spatially variable genes for extremely sparse data
+#'
+#' @description Identify spatial variable genes based on spatial connectness of spots/cells with high expression. For genes with different sparsity level, the function adjusts the neighborhood search region automatically.
+
+#' @param expr gene expression matrix, the row is the gene and the column is the spot/cell
+#' @param location location matrix, the row number of location should match the column number of expr
+#' @param normalize whether to normalize the data (default: TRUE)
+#' @param maxN the maximum number of spots/cells considered high expression (default: 10 percent of the total spots/cells)
+#' @param minN the minimum number of spots/cells considered high expression (default: 50. genes with less than 50 cells/spots expressed are excluded)
+#' @param perm the number of random permutations (default: 500)
+#' @param sizefactor the size factor for normalization (default:10000)
+#' @return a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)
+
+#' @export
+
+SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(location)[1]),minN=50,perm=500,sizefactor=10000) {
+
+  expr<-expr[Matrix::rowSums(expr>0)>minN,]
+
+  ncell<-dim(location)[1]
+  ngene<-dim(expr)[1]
+
+  if (dim(expr)[2]!=ncell) {stop("the ncol of expr should match the nrow of location")}
+
+  if (is.null(rownames(expr))){rownames(expr)<- paste0("gene",1:ngene)}
+
+  num<-round(log2(maxN/minN))+1
+  topn<-minN*2^(seq(0,num-1,1))
+  knn<-rev(cumsum(seq(8,8*num,8)))
+
+  mean_rand<-sd_rand<-rep(0,num)
+  nnmatrix<-list()
+
+  for (i in 1:num) {
+    nnmatrix[[i]]<-RANN::nn2(location,k=knn[i])$nn.idx
+
+    ##the permutation result
+
+    rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(1:ncell,topn[i]);return(Caldegree(ind,nnmatrix[[i]],knn[i]))}))
+
+    mean_rand[i]<-mean(rand_result)
+    sd_rand[i]<-sd(rand_result)
+
+  }
+
+  spagene_res<-data.frame(score=rep(NA,ngene),zval=rep(NA,ngene),pval=rep(NA,ngene),row.names=rownames(expr),stringsAsFactors = FALSE)
+
+  if (is(expr,"sparseMatrix")){
+    exprt<-Matrix::t(expr)
+    colind<-exprt@i+1
+    dp<-exprt@p
+    expval<-exprt@x
+
+    if (normalize==TRUE) {
+        lib_size<-Matrix::rowSums(exprt)
+        expval<-log(expval/lib_size[colind]*sizefactor+1)
+        exprt@x<-expval
+        expr<-Matrix::t(exprt)
+      }
+
+
+    for (geneind in 1:ngene) {
+
+
+       ind<-max(which(topn<(dp[geneind+1]-dp[geneind])))
+       geneexp<-rep(0,ncell)
+       valind<-(dp[geneind]+1):dp[geneind+1]
+       geneexp[colind[valind]]<-expval[valind]
+
+       highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn[ind]]
+
+       spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind])
+       spagene_res$zval[geneind]<-(high-mean_rand[ind])/sd_rand[ind]
+       spagene_res$pval[geneind]<-pnorm(high,mean=mean_rand[ind],sd=sd_rand[ind])
+    }
+
+  }else{
+
+    if (normalize==TRUE) {
+        expr<-log(t(t(expr)/(colSums(expr))*sizefactor)+1)
+      }
+      for (geneind in 1:ngene) {
+
+         geneexp<-expr[geneind,]
+         ind<-max(which(topn<sum(geneexp>0)))
+
+         highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn[ind]]
+
+        spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind])
+        spagene_res$zval[geneind]<-(high-mean_rand[ind])/sd_rand[ind]
+        spagene_res$pval[geneind]<-pnorm(high,mean=mean_rand[ind],sd=sd_rand[ind])
+       }
+
+    }
+    spagene_res$adjp<-p.adjust(spagene_res$pval,method="BH")
+    return(list(normexp=expr,spagene_res=spagene_res))
+ }
+
+
+#' Identify spatially variable genes within the same cell type
+#'
+#' @description Identify spatial variable genes within the same cell type
+
+#' @param expr gene expression matrix, the row is the gene and the column is the spot/cell
+#' @param location location matrix, the row number of location should match the column number of expr
+#' @param CellType the cell type, the length should match the column number of locations
+#' @param normalize whether to normalize the data (default: TRUE)
+#' @param top the maximum ratio of spots/cells in the same cell type considered high expression (default: 20 percent of the spots/cells within a cell type, 10 is used if top is less than 10)
+#' @param knn the number of nearest neighbours to search (default: 8)
+#' @param minN the minimum number of spots/cells  (default: 0. genes with less than or equal to minN cells/spots expressed are excluded)
+#' @param perm the number of random permutations (default: 500)
+
+#' @return a data frame containing results of each gene in each cell type
+
+#' @export
+
+SpaGene_CT<-function(expr,location,CellType, normalize=T,top=0.2,knn=8,minN=0,perm=500) {
+
+
+  expr<-expr[Matrix::rowSums(expr>0)>minN,]
+
+
+  ncell<-dim(location)[1]
+  ngene<-dim(expr)[1]
+
+  CT<- (unique(CellType))
+
+  if (dim(expr)[2]!=ncell) {stop("the ncol of expr should match the nrow of location ")}
+  if (length(CellType)!=ncell) {stop ("the cell type length should match the nrow of location")}
+  if (is.null(rownames(expr))){rownames(expr)<- paste0("gene",1:ngene)}
+
+  if (normalize==TRUE) {expr<-Matrix::t(Matrix::t(expr)/(Matrix::colSums(expr)))}
+
+  nnmatrix<-RANN::nn2(location,k=knn)$nn.idx
+
+
+  if (is(expr,"sparseMatrix")){
+    exprt<-Matrix::t(expr)
+    colind<-exprt@i+1
+    dp<-exprt@p
+    expval<-exprt@x
+  }
+
+
+
+
+  spa_ct_result<-NULL
+
+  for ( nCT in 1: length(CT)) {
+
+
+    celltypeid<- which(CellType==CT[nCT])
+    if (length(celltypeid)>10) {
+
+      topn<-max(floor(length(celltypeid)*top),10)
+
+      rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(celltypeid,topn);return(Caldegree(ind,nnmatrix,knn))}))
+      mean_rand<-mean(rand_result)
+      sd_rand<-sd(rand_result)
+
+      result<-data.frame(score=rep(NA,ngene),names=rownames(expr),CT=CT[nCT],stringsAsFactors = FALSE)
+      for (geneind in 1:ngene) {
+
+
+        if (is(expr,"sparseMatrix")){
+          geneexp<-rep(0,ncell)
+          ind<-(dp[geneind]+1):dp[geneind+1]
+          geneexp[colind[ind]]<-expval[ind]
+
+        } else{  geneexp<-expr[geneind,]}
+
+        highind<-order(geneexp,sample(ncell,ncell),decreasing=T)
+        highind<-highind[highind %in% celltypeid] [1:topn]
+        result$score[geneind]<-Caldegree(highind,nnmatrix,knn)
+      }
+
+
+      result$zval<-(result$score-mean_rand)/sd_rand
+      result$pval<-pnorm(result$score,mean=mean_rand,sd=sd_rand)
+      result$adjp<-p.adjust(result$pval,method="BH")
+      spa_ct_result<-rbind(spa_ct_result,result)
+    }
+  }
+
+
+  return(spa_ct_result)
+}
+
+
+
+
 #' Plot patterns
 #'
 #' @description plot patterns from spatially variable genes
@@ -265,7 +456,7 @@ plotLR<-function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=
 
   alpha=(LRadd-min(LRadd))/(max(LRadd)-min(LRadd))*(1-alpha.min)+alpha.min
 
-  p1<-ggplot(tmp,aes(x=x,y=y,col=Exp))+geom_point(size=pt.size)+scale_color_manual(values=c("gray","red","green","blue"),labels=c("Both low","Ligand high","Recptor High","Both High"))+ggtitle(paste0(LRpair,collapse="_"))+xlab("")+ylab("")+theme(axis.line=element_blank(),axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(),axis.ticks.y=element_blank())
+  p1<-ggplot(tmp,aes(x=x,y=y,col=Exp))+geom_point(size=pt.size)+scale_color_manual(values=c("gray","red","green","blue"),labels=c("Both low","Ligand high","Receptor High","Both High"))+ggtitle(paste0(LRpair,collapse="_"))+xlab("")+ylab("")+theme(axis.line=element_blank(),axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(),axis.ticks.y=element_blank())
   p2<-ggplot(tmpLRadd,aes(x=x,y=y,col=LR))+geom_point(size=pt.size,alpha=alpha)+scale_color_gradient2(midpoint=quantile(LRadd,probs=0.5),low="gray",high="red",mid="gray")+xlab("")+ylab("")+theme(axis.line=element_blank(),axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(),axis.ticks.y=element_blank())+labs(color = "LR")
   p1+p2&scale_y_reverse()
 }
