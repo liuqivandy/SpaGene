@@ -26,7 +26,7 @@ install_github("liuqivandy/SpaGene")
 
 # Citation
 
- Liu Q, Scalable and model-free detection of spatial patterns and colocalization.
+ Liu Q, Hsu Chih-Yuan, Shyr Yu,Scalable and model-free detection of spatial patterns and colocalization.
  
 
 <a name="tutoral"/>
