@@ -26,7 +26,7 @@ install_github("liuqivandy/SpaGene")
 
 # Citation
 
- Liu Q, Scalable and model-free detection of spatial patterns and colocalization.
+ Liu Q, Hsu Chih-Yuan, Shyr Yu. Scalable and model-free detection of spatial patterns and colocalization.
  
 
 <a name="tutoral"/>
@@ -37,3 +37,5 @@ install_github("liuqivandy/SpaGene")
 - [Analyze Slideseq V2 mouse cerebellum data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/mc_slideseqv2.html)
 - [Analyze 10X Visium mouse brain data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/mbrain_10X.html)
 - [Analyze HDST MOB data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/HDST.html)
+- [Analyze spatial transcriptomics Breat Cancer data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/Breastcancer.html)
+- [Analyze Slideseq V2 MOB data](https://htmlpreview.github.io/?https://github.com/liuqivandy/SpaGene/blob/master/Tutorial/mob_slideseqv2.html)
