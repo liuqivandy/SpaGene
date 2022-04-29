@@ -9,7 +9,7 @@
 
 # Introduction
 
-SpaGene is a R package to find sptially variable genes and colocalized gene pairs from sptial omics data.
+SpaGene is a R package to find sptially variable genes and colocalized gene pairs from spatial omics data.
 
 <a name="installation"/>
 
