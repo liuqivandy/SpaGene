@@ -9,7 +9,7 @@
 
 # Introduction
 
-SpaGene is a R package to find sptially variable genes and colocalized gene pairs from sptial omics data.
+SpaGene is a R package to find sptially variable genes and colocalized gene pairs from spatial omics data.
 
 <a name="installation"/>
 
@@ -26,7 +26,7 @@ install_github("liuqivandy/SpaGene")
 
 # Citation
 
- Liu Q, Hsu Chih-Yuan, Shyr Yu. Scalable and model-free detection of spatial patterns and colocalization.
+ Liu Q, Hsu Chih-Yuan, Shyr Yu. Scalable and model-free detection of spatial patterns and colocalization, [bioRxiv,2022](https://www.biorxiv.org/content/10.1101/2022.04.20.488961v1) 
  
 
 <a name="tutoral"/>
