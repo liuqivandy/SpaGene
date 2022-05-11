@@ -420,10 +420,11 @@ PlotPattern<-function(pattern,location,max.cutoff=0.9,pt.size=2,alpha.min=0.1) {
 #' @param LRpair the ligand-receptor pair for plot
 #' @param pt.size the point size (default:2)
 #' @param alpha.min the alpha for the minimum value (default:0.1)
+#' @param max.cut the maximum cutoff for the LR activity
 #' @return a data frame containing the result of each ligand-receptor pair
 #' @export
 
-plotLR<-function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,LRpair=c("Ptn","Ptprz1"),pt.size=2,alpha.min=0.1){
+plotLR<-function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,LRpair=c("Ptn","Ptprz1"),pt.size=2,alpha.min=0.1,max.cut=0.95){
   if (sum(rownames(expr) %in% LRpair)!=2) { stop("ligand or receptor are not expressed")}
   nnmatrix<-RANN::nn2(location,k=knn)$nn.idx
   countsum<-Matrix::colSums(expr)
@@ -439,12 +440,13 @@ plotLR<-function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=
   LRexp<-rbind(ligand,receptor)
   neighexp<-apply(nnmatrix,1,function(x){apply(LRexp[,x[2:knn]],1,max)})
 
-  LRexp<-t(scale(t(LRexp)))
-  neighexp<-t(scale(t(neighexp)))
-  LRexp[LRexp<0]<-0
-  neighexp[neighexp<0]<-0
+  #LRexp<-t(scale(t(LRexp)))
+  #neighexp<-t(scale(t(neighexp)))
+  #LRexp[LRexp<0]<-0
+  #neighexp[neighexp<0]<-0
   LRadd<-pmax(LRexp[1,]*neighexp[2,],LRexp[2,]*neighexp[1,])
-
+  LRadd_max<-quantile(LRadd,probs=max.cut)
+  LRadd[LRadd>LRadd_max]<-LRadd_max
   if (sum(ligand>0)>topn) {n1<-order(ligand,sample(ncell,ncell),decreasing=T)[1:topn]} else{n1<-which(ligand>0)}
   if (sum(receptor>0)>topn) {n2<-order(receptor,sample(ncell,ncell),decreasing=T)[1:topn]} else{n2<-which(receptor>0)}
   expcol<-rep(0,ncell)
