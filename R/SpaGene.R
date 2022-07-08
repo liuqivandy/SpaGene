@@ -575,3 +575,81 @@ LRactivity<-function (expr, location, normalize = T, knn = 8, LRpair = LRpair) {
   }
   return(LRactivity)
 }
+
+
+#' Find spatial patterns across multiple samples
+#' @description Find spatial patterns across multiple samples
+#' @param spagene_list a list of results from SpaGene, each result containing normexp and spagene_res
+#' @param cutoff the adjp cutoff to select spatially variable genes (default: 0.01)
+#' @param nPattern the number of patterns (default:12)
+#' @return a list containing the pattern (pattern), gene similarity with the pattern (genepattern), and the pattern weight (patternw)
+#' @export
+
+
+FindPattern_Multi<-function(spagene_list,cutoff=0.01,nPattern=12){
+  spageneres<-spagene_list[[1]]$spagene_res
+  genes<-rownames(spageneres)[spageneres$adjp<cutoff]
+  data<-spagene_list[[1]]$normexp
+  for (i in 2:length(spagene_list)){
+    spageneres<-spagene_list[[i]]$spagene_res
+    genes<-unique(c(genes,rownames(spageneres)[spageneres$adjp<cutoff]))
+    tmpdata<-spagene_list[[i]]$normexp
+    data<-merge(data,tmpdata,by=0)
+    rownames(data)<-data[,1]
+    data<-data[,-1]
+
+  }
+
+  data_g<-as.matrix(data[rownames(data)%in%genes,])
+  set.seed(16)
+  model<-RcppML::nmf(data_g,nPattern,verbose = FALSE)
+  cellload<-model$h
+  patternw<-model$d
+  genew<-model$w
+  rownames(genew)<-rownames(data_g)
+  rownames(cellload)<-paste0("Pattern",1:nPattern)
+  genepattern<-cor(t(data_g),t(cellload),method="spearman")
+  return(list(pattern=cellload,genepattern=genepattern,patternw=patternw))
+}
+
+
+#' Plot patterns across multiple samples
+#'
+#' @description plot patterns from spatially variable genes from multiple samples
+
+#' @param pattern pattern result from FindPattern_Multi
+#' @param location a list of location matrix
+#' @param max.cutoff the maximum value cutoff (default:0.9)
+#' @param pt.size the point size (default:2)
+#' @param alpha.min the alpha value of the minimum value (default:0.1)
+#' @return a list of ggplot
+#' @export
+PlotPattern_Multi<-function(pattern,locationlist,patternid=1,max.cutoff=0.9,pt.size=2,alpha.min=0.1) {
+
+  if(!requireNamespace("RColorBrewer", quietly = TRUE)){install.packages("RColorBrewer")}
+
+
+
+  plist<-list()
+  locind<-1
+  maxoverall<-quantile(pattern$pattern[patternid,],max.cutoff)
+
+  for (i in 1:length(locationlist)) {
+
+    location<-locationlist[[i]]
+    colnames(location)<-c("x","y")
+
+    feature=pattern$pattern[patternid,locind:(locind+nrow(location)-1)]
+    max.use<-min(quantile(feature,max.cutoff),maxoverall)
+
+    feature[feature>max.use ]<-max.use
+    alpha=(feature-min(feature))/(max(feature)-min(feature))*(1-alpha.min)+alpha.min
+    tmp<-as.data.frame(cbind(location,exp=feature,alpha=alpha))
+
+    p1<-ggplot(tmp,aes(x=x,y=y,col=exp,alpha=alpha))+geom_point(size=pt.size)+scale_y_reverse()+scale_color_gradientn(limits=c(0,maxoverall),colours=rev(RColorBrewer::brewer.pal(n = 10, name = "RdYlBu")))+xlab("")+ylab("")+theme(axis.line=element_blank(),axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(),axis.ticks.y=element_blank())+guides( color="none",alpha = "none")+ggtitle(paste0("Sample ",i,":Pattern",patternid))
+    plist[[i]]<-p1
+    locind<-locind+nrow(location)
+
+  }
+  patchwork::wrap_plots(plist)
+}
