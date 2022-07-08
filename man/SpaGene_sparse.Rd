@@ -11,7 +11,8 @@ SpaGene_sparse(
   maxN = floor(0.1 * dim(location)[1]),
   minN = 50,
   perm = 500,
-  sizefactor = 10000
+  sizefactor = 10000,
+  weight = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ SpaGene_sparse(
 \item{perm}{the number of random permutations (default: 500)}
 
 \item{sizefactor}{the size factor for normalization (default:10000)}
+
+\item{weight}{weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight can be a numeric vector of length 2*knn+1 (default:NULL)}
 }
 \value{
 a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)

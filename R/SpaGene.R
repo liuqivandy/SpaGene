@@ -10,11 +10,12 @@
 #' @param perm the number of random permutations (default: 500)
 #' @param minN the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)
 #' @param sizefactor the size factor for normalization (default:10000)
+#' @param weight  weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight is a numeric vector of length 2*knn+1 (default:NULL)
 #' @return a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)
 
 #' @export
 
-SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,perm=500,minN=0,sizefactor=10000) {
+SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=8,perm=500,minN=0,sizefactor=10000,weight=NULL) {
   set.seed(1)
   expr<-expr[Matrix::rowSums(expr>0)>minN,]
 
@@ -27,7 +28,7 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
 
    nnmatrix<-RANN::nn2(location,k=knn)$nn.idx
 
-   rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(1:ncell,topn);return(Caldegree(ind,nnmatrix,knn))}))
+   rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(1:ncell,topn);return(Caldegree(ind,nnmatrix,knn,weight=weight))}))
 
    mean_rand<-mean(rand_result)
    sd_rand<-sd(rand_result)
@@ -56,7 +57,7 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
       subind<-(dp[geneind]+1):dp[geneind+1]
       geneexp[colind[subind]]<-expval[subind]
       highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn]
-      spagene_res$score[geneind]<-Caldegree(highind,nnmatrix,knn)
+      spagene_res$score[geneind]<-Caldegree(highind,nnmatrix,knn,weight=weight)
 
 
     }
@@ -70,7 +71,7 @@ SpaGene <- function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),k
               geneexp<-expr[geneind,]
 
               highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn]
-              spagene_res$score[geneind]<-Caldegree(highind,nnmatrix,knn)
+              spagene_res$score[geneind]<-Caldegree(highind,nnmatrix,knn,weight=weight)
          }
     }
 
@@ -192,11 +193,12 @@ SpaGene_LR<-function(expr,location,normalize=T, topn=floor(0.2*dim(location)[1])
 #' @param minN the minimum number of spots/cells considered high expression (default: 50. genes with less than 50 cells/spots expressed are excluded)
 #' @param perm the number of random permutations (default: 500)
 #' @param sizefactor the size factor for normalization (default:10000)
+#' @param weight  weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight can be a numeric vector of length 2*knn+1 (default:NULL)
 #' @return a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)
 
 #' @export
 
-SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(location)[1]),minN=50,perm=500,sizefactor=10000) {
+SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(location)[1]),minN=50,perm=500,sizefactor=10000,weight=NULL) {
 
   expr<-expr[Matrix::rowSums(expr>0)>minN,]
 
@@ -219,7 +221,7 @@ SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(locatio
 
     ##the permutation result
 
-    rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(1:ncell,topn[i]);return(Caldegree(ind,nnmatrix[[i]],knn[i]))}))
+    rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(1:ncell,topn[i]);return(Caldegree(ind,nnmatrix[[i]],knn[i],weight=weight))}))
 
     mean_rand[i]<-mean(rand_result)
     sd_rand[i]<-sd(rand_result)
@@ -252,7 +254,7 @@ SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(locatio
 
        highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn[ind]]
 
-       spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind])
+       spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind],weight=weight)
        spagene_res$zval[geneind]<-(high-mean_rand[ind])/sd_rand[ind]
        spagene_res$pval[geneind]<-pnorm(high,mean=mean_rand[ind],sd=sd_rand[ind])
     }
@@ -269,7 +271,7 @@ SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(locatio
 
          highind<-order(geneexp,sample(ncell,ncell),decreasing=T)[1:topn[ind]]
 
-        spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind])
+        spagene_res$score[geneind]<-high<-Caldegree(highind,nnmatrix[[ind]],knn[ind],weight=weight)
         spagene_res$zval[geneind]<-(high-mean_rand[ind])/sd_rand[ind]
         spagene_res$pval[geneind]<-pnorm(high,mean=mean_rand[ind],sd=sd_rand[ind])
        }
@@ -292,12 +294,13 @@ SpaGene_sparse<-function(expr,location,normalize=TRUE,maxN=floor(0.1*dim(locatio
 #' @param knn the number of nearest neighbours to search (default: 8)
 #' @param minN the minimum number of spots/cells  (default: 0. genes with less than or equal to minN cells/spots expressed are excluded)
 #' @param perm the number of random permutations (default: 500)
+#' @param weight  weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight is a numeric vector of length 2*knn+1 (default:NULL)
 
 #' @return a data frame containing results of each gene in each cell type
 
 #' @export
 
-SpaGene_CT<-function(expr,location,CellType, normalize=T,top=0.2,knn=8,minN=0,perm=500) {
+SpaGene_CT<-function(expr,location,CellType, normalize=T,top=0.2,knn=8,minN=0,perm=500,weight=NULL) {
 
 
   expr<-expr[Matrix::rowSums(expr>0)>minN,]
@@ -337,7 +340,7 @@ SpaGene_CT<-function(expr,location,CellType, normalize=T,top=0.2,knn=8,minN=0,pe
 
       topn<-max(floor(length(celltypeid)*top),10)
 
-      rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(celltypeid,topn);return(Caldegree(ind,nnmatrix,knn))}))
+      rand_result<-unlist(lapply(1:perm,function(x){ind<-sample(celltypeid,topn);return(Caldegree(ind,nnmatrix,knn,weight=weight))}))
       mean_rand<-mean(rand_result)
       sd_rand<-sd(rand_result)
 
@@ -354,7 +357,7 @@ SpaGene_CT<-function(expr,location,CellType, normalize=T,top=0.2,knn=8,minN=0,pe
 
         highind<-order(geneexp,sample(ncell,ncell),decreasing=T)
         highind<-highind[highind %in% celltypeid] [1:topn]
-        result$score[geneind]<-Caldegree(highind,nnmatrix,knn)
+        result$score[geneind]<-Caldegree(highind,nnmatrix,knn,weight=weight)
       }
 
 
@@ -464,22 +467,43 @@ plotLR<-function(expr,location,normalize=T,topn=floor(0.2*dim(location)[1]),knn=
 }
 
 
-Caldegree<-function(nodelist,nnmatrix,knnnum) {
+Caldegree<-function(nodelist,nnmatrix,knnnum,weight=NULL) {
+
   nodenum<-length(nodelist)
 
   nnmatrix_sub<-nnmatrix[nodelist,-1]
 
-  deg<-rep(0,nodenum)
-  matchres<-matrix(match(nnmatrix_sub,nodelist),ncol=knnnum-1,byrow=F)
-  ind<-!is.na(matchres)
-  deg<-deg+rowSums(ind)
 
-  matchres<-matchres[ind]
-  for (i in 1:length(matchres)) deg[matchres[i]]<-deg[matchres[i]]+1
+  if (!is.null(weight) ) {
+    if( is.character(weight)){
+      if (weight=="linear")
+         weight<-0.5+0:(knnnum*2)/(knnnum*2)*0.5 }else {
 
-  dis<-sum(cumsum(tabulate(deg+1,nbins=2*knnnum+1)/nodenum))
-  return(dis)
+        if (length(weight)!=2*knnnum+1 & is.numeric(weight))  {stop("the weight should be a numeric vector and its length should be equal to 2*k+1")}
+      }
+  }
+  if(is.null(weight)) {
+    num_edge<-sum(!is.na(match(nnmatrix_sub,nodelist)))
+    dis<-2*knnnum-num_edge/nodenum
+    return(dis)
+  }else {
+
+    deg<-rep(0,nodenum)
+
+
+    matchres<-matrix(match(nnmatrix_sub,nodelist),ncol=knnnum-1,byrow=F)
+
+    ind<-!is.na(matchres)
+    deg<-deg+rowSums(ind)
+
+    matchres<-matchres[ind]
+    for (i in 1:length(matchres)) deg[matchres[i]]<-deg[matchres[i]]+1
+
+    dis<-sum(cumsum(tabulate(deg+1,nbins=2*knnnum+1)/nodenum*weight))
+    return(dis)
+  }
 }
+
 
 Caldegree_pair<-function(nodelist1,nodelist2,nnmatrix,knnnum) {
   nodenum<-length(nodelist1)
@@ -502,3 +526,52 @@ Caldegree_pair<-function(nodelist1,nodelist2,nnmatrix,knnnum) {
 
 
 
+#' calculate the activity for each LR pair
+#'
+#' @description calcuate the LR activity
+#' @param expr gene expression matrix, the row is the gene and the column is the spot/cell
+#' @param location location matrix, the row number of location should match the column number of expr
+#' @param normalize whether to normalize the data (default: TRUE)
+#' @param knn the number of nearest neighbours to search (default: 8)
+#' @param LRpair the ligand-receptor pair for plot
+#' @return a data matrix with LR activity in each location, row is LR pair, column is location.
+#' @export
+LRactivity<-function (expr, location, normalize = T, knn = 8, LRpair = LRpair) {
+
+  nnmatrix <- RANN::nn2(location, k = knn)$nn.idx
+  countsum <- Matrix::colSums(expr)
+  ncell <- dim(expr)[2]
+  if (normalize == TRUE) {
+    expr <- Matrix::t(log(Matrix::t(expr)/countsum * median(countsum) +
+                            1))
+  }
+
+  Lrlist<-unique(c(LRpair[,1],LRpair[,2]))
+
+  lr_exp<-as.matrix(expr[rownames(expr)%in%Lrlist,])
+
+
+
+
+
+
+  # lr_expneigh<-apply(nnmatrix,1,function(x){rowMeans(lr_exp[,x[2:knn[1]]])})
+
+
+  lr_expneigh<-apply(nnmatrix,1,function(x){apply(lr_exp[,x[2:knn[1]]],1,max)})
+  LRactivity<-NULL
+
+  for (lrind in 1:dim(LRpair)[1]){
+    if ( sum( rownames(lr_exp) %in% LRpair[lrind,1:2])==2){
+      Lexp<-lr_exp[LRpair[lrind,1],]
+      Rexp<-lr_exp[LRpair[lrind,2],]
+      Lexp_nn<-lr_expneigh[LRpair[lrind,1],]
+      Rexp_nn<-lr_expneigh[LRpair[lrind,2],]
+      LRadd<-pmax(Lexp *Rexp_nn,Rexp*Lexp_nn)
+      LRactivity<-rbind(LRactivity,LRadd)
+
+    }
+
+  }
+  return(LRactivity)
+}

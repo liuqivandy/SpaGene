@@ -12,7 +12,8 @@ plotLR(
   knn = 8,
   LRpair = c("Ptn", "Ptprz1"),
   pt.size = 2,
-  alpha.min = 0.1
+  alpha.min = 0.1,
+  max.cut = 0.95
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ plotLR(
 \item{pt.size}{the point size (default:2)}
 
 \item{alpha.min}{the alpha for the minimum value (default:0.1)}
+
+\item{max.cut}{the maximum cutoff for the LR activity}
 }
 \value{
 a data frame containing the result of each ligand-receptor pair

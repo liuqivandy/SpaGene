@@ -12,7 +12,8 @@ SpaGene(
   knn = 8,
   perm = 500,
   minN = 0,
-  sizefactor = 10000
+  sizefactor = 10000,
+  weight = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ SpaGene(
 \item{minN}{the minimum number of spots/cells with gene expression. Genes expressed equal to or less than minN spots/cells are excluded (default:0)}
 
 \item{sizefactor}{the size factor for normalization (default:10000)}
+
+\item{weight}{weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight is a numeric vector of length 2*knn+1 (default:NULL)}
 }
 \value{
 a list containing results of each gene (spagene_res) and normalized gene expression matrix (normexp)

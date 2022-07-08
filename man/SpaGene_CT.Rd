@@ -12,7 +12,8 @@ SpaGene_CT(
   top = 0.2,
   knn = 8,
   minN = 0,
-  perm = 500
+  perm = 500,
+  weight = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ SpaGene_CT(
 \item{minN}{the minimum number of spots/cells  (default: 0. genes with less than or equal to minN cells/spots expressed are excluded)}
 
 \item{perm}{the number of random permutations (default: 500)}
+
+\item{weight}{weights assigned to degree. If NULL, equal weight, wi=1, i is the degree, i=0,1,...2*knn; if "linear", wi=0.5+0.5*i/(2*knn); or weight is a numeric vector of length 2*knn+1 (default:NULL)}
 }
 \value{
 a data frame containing results of each gene in each cell type
